@@ -22,7 +22,8 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 int execute_command(char *command);
 int _unsetenv(const char *name);
 char **split_string(const char *input_string, const char *delimiter);
-/*char **split_string(const char *input_string, const char *delimiter, int *word_count);*/
+/*char **split_string(const char *input_string*/
+/* const char *delimiter, int *word_count);*/
 void print_words(char **words, int word_count);
 void free_words(char **words, int word_count);
 
