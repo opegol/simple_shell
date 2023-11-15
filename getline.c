@@ -1,89 +1,141 @@
 #include "shell.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-ssize_t custom_getline(char **line, size_t *len, FILE *stream);
+#define MAX_INPUT_SIZE 1024
 
 /**
- * main - Entry point of the program.
+ * getline - Reads a line from standard input.
+ *
+ * This function reads a line from the standard input using the getline
+ * function and dynamically allocates memory to store the input.
+ *
+ * @lineptr: A pointer to the buffer where the line will be stored.
+ * @n: A pointer to the size of the buffer.
+ * @stream: A FILE pointer representing the input stream (stdin in this case).
+ *
+ * Return: The number of characters read, or -1 if an error occurs.
+ */
+
+ssize_t getline(char **lineptr, size_t *n, FILE *stream);
+
+/**
+ * main - function of the simple shell program.
+ *
+ * This function continuously prompts the user with "$ ", reads their input,
+ * and prints the entered command on the next line.
  *
  * Return: 0 on successful execution.
  */
 
 int main(void)
 {
-	char *line = NULL;
+	char *input = NULL;
 	size_t len = 0;
 	ssize_t read;
 
-	while ((read = custom_getline(&line, &len, stdin)) != -1)
+	while (1)
 	{
-		printf("Line: %s", line);
+		/* Print the prompt "$ " */
+		printf("$ ");
+
+		/* Read user input until EOF condition (Ctrl+D) is encountered */
+		read = getline(&input, &len, stdin);
+
+		/* Check for EOF */
+		if (read == -1)
+		{
+			if (feof(stdin))
+			{
+				/* User pressed Ctrl+D (EOF), exit gracefully */
+				break;
+			}
+			else
+			{
+				/* Error while reading input */
+				perror("getline");
+				break;
+			}
+		}
+
+		/* Remove newline character from input */
+		input[strcspn(input, "\n")] = '\0';
+
+		/* Execute the entered command */
+		if (execute_command(input) == -1)
+		{
+			fprintf(stderr, "Error executing command: %s\n", input);
+		}
 	}
 
-	free(line); /* Free allocated memory */
+	/* Free dynamically allocated memory */
+	free(input);
+
 	return (0);
 }
 
 /**
- * custom_getline - function reads a line from the specified stream
- * and stores it in the provided buffer.
- * @line: Pointer to the character array where the line will be stored.
- * @len: Pointer to the length of the array.
- * @stream: Input stream to read from.
+ * execute_command - Executes a command in a child process.
  *
- * Return: the number of characters read (excluding the null terminator)
- * or -1 on failure.
+ * This function takes a command string, parses it into arguments, forks
+ * a new process, and executes the command in the child process.
+ *
+ * @command: The command string to be executed.
+ *
+ * Return: 0 on successful execution, -1 on failure.
  */
 
-ssize_t custom_getline(char **line, size_t *len, FILE *stream)
+int execute_command(char *command)
 {
-	if (line == NULL || len == NULL)
+	pid_t pid, wpid;
+	int status;
+
+	/* Fork a new process */
+	pid = fork();
+
+	if (pid == 0)
 	{
-		return (-1); /* Invalid arguments */
-	}
+		/* Child process */
 
-	if (*line == NULL || *len == 0)
-	{
-		*line = NULL;
-		*len = 0;
-	}
+		/* Parse the command into arguments */
+		char *args[MAX_INPUT_SIZE];
+		char *token = strtok(command, " ");
+		int i = 0;
 
-	int ch;
-	size_t capacity = *len;
-	size_t pos = 0;
-
-	while (1)
-	{
-		ch = fgetc(stream);
-
-		if (ch == EOF || ch == '\n')
+		while (token != NULL)
 		{
-			if (ch == EOF && (pos == 0 || ferror(stream)))
-			{
-				return (-1); /* End-of-file or error */
-			}
-			break;
+			args[i++] = token;
+			token = strtok(NULL, " ");
 		}
 
-		if (pos + 1 >= capacity)
+		args[i] = NULL; /* Null-terminate the argument list */
+
+		/* Execute the command */
+		if (execvp(args[0], args) == -1)
 		{
-			capacity = (capacity == 0) ? 128 : capacity * 2;
-			char *new_line = (char *)realloc(*line, capacity);
-
-			if (new_line == NULL)
-			{
-				perror("realloc failed");
-				return (-1); /* Memory allocation error */
-			}
-			*line = new_line;
-			*len = capacity;
+			perror("execvp");
+			exit(EXIT_FAILURE);
 		}
-
-		(*line)[pos++] = ch;
 	}
+	else if (pid < 0)
+	{
+		/* Error forking */
+		perror("fork");
+		return (-1);
+	}
+	else
+	{
+		/* Parent process */
 
-	(*line)[pos] = '\0';
+		/* Wait for the child process to complete */
+		do {
+			wpid = waitpid(pid, &status, WUNTRACED);
+		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
-	return (pos);
+		return (0);
+	}
 }
