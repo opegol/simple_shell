@@ -20,6 +20,7 @@
 char **split_string(const char *input_string, const char *delimiter)
 {
 	char *token;
+	int word_count = 0;
 	char **words = (char **)malloc(MAX_WORDS * sizeof(char *));
 
 	if (words == NULL)
@@ -27,9 +28,7 @@ char **split_string(const char *input_string, const char *delimiter)
 		fprintf(stderr, "Memory allocation failed\n");
 		exit(EXIT_FAILURE);
 	}
-
-	int word_count = 0;
-
+	/*int word_count = 0;*/
 	/* Using strtok to split the string */
 	token = strtok((char *)input_string, delimiter);
 
@@ -57,23 +56,17 @@ char **split_string(const char *input_string, const char *delimiter)
  * main - Entry point for the program
  *
  * Return: 0 on successful execution.
+ * int main(void)
+ * {
+ * const char *input_str = "This is a sample string.";
+ * const char *delimiter = " ";
+ *
+ * char **result = split_string(input_str, delimiter);
+ * Print the result
+ * for (int i = 0; result[i] != NULL; i++)
+ * {printf("%s\n", result[i]);
+ * free(result[i]);   Free the memory allocated for each word
+ * }free(result);   Free the array of words
+ * return (0);
+ * }
  */
-
-int main(void)
-{
-	const char *input_str = "This is a sample string.";
-	const char *delimiter = " ";
-
-	char **result = split_string(input_str, delimiter);
-
-	/* Print the result */
-	for (int i = 0; result[i] != NULL; i++)
-	{
-		printf("%s\n", result[i]);
-		free(result[i]);  /* Free the memory allocated for each word */
-	}
-
-	free(result);  /* Free the array of words */
-
-	return (0);
-}
