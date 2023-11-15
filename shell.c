@@ -174,7 +174,7 @@ int main(int ac, char **av)
 
 			token = stok(line);
 			dat->exec_hist++;
-			ret = builtin_cmd_handler(token, line, dat)
+			ret = builtin_cmd_handler(token, line, dat);
 			if (ret < 0)
 				ret = execute(token, dat);
 			free(token);
