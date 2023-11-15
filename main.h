@@ -12,6 +12,10 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#define MAX_INPUT_SIZE 1024
+#define MAX_WORDS 100
+#define MAX_WORD_LENGTH 50
+
 extern char **environ;
 /*int exec_hist;*/
 /*int newstring_flag;*/
@@ -44,8 +48,8 @@ typedef struct glo_var
 int slen(const char *s);
 char *_getenv(const char *name);
 char **stok(char *str);
-/*int _setenv(const char *name, const char *value, int overwrite);*/
-/*int _unsetenv(const char *name);*/
+int _setenv(const char *name, const char *value, int overwrite);
+int _unsetenv(const char *name);
 char *_which(char *pathname, gvar *dat);
 int builtin_cmd_handler(char **token, char *line, gvar *dat);
 int _strcmp(char *s1, char *s2);
@@ -60,6 +64,12 @@ char **env_copy(void);
 void fre_env(void);
 void pr_env(void);
 int print_err_msg(char **token, int err_num, gvar *dat);
+int find_env_variable(const char *name);
+void replace_env_variable(const char *name, const char *value, char **env);
+void add_env_variable(const char *name, const char *value);
+ssize_t custom_getline(char **line, size_t *len, FILE *stream);
+ssize_t getline(char **lineptr, size_t *n, FILE *stream);
+char **split_string(const char *input_string, const char *delimiter);
 
 /*int execute_command(char *command, char *progname);*/
 
