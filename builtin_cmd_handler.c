@@ -16,8 +16,7 @@ int exit_h(char **token, char *line, gvar *dat);
 int builtin_cmd_handler(char **token, char *line, gvar *dat)
 {
 	int i, arr_len, cmd_type = 0;
-	char *built_in_cmd[] = {"cd", "env", "exit", NULL};
-	/* "setenv", "unsetenv", NULL};*/
+	char *built_in_cmd[] = {"cd", "env", "exit", "setenv", "unsetenv", NULL};
 
 	arr_len = cmd_arr_len(built_in_cmd);
 
@@ -47,13 +46,13 @@ int builtin_cmd_handler(char **token, char *line, gvar *dat)
 			exit_h(token, line, dat);
 			break;
 
-		/*case 4:*/
-			/*_setenv(token[1], token[2], 1)*/
-				/*break;*/
+		case 4:
+			_setenv(token[1], token[2], 1);
+			break;
 
-		/*case 5:*/
-			/*_unsetenv(token[1]);*/
-			/*break;*/
+		case 5:
+			_unsetenv(token[1]);
+			break;
 
 		default:
 			return (-1);
@@ -89,7 +88,7 @@ int cd_h(char *str, gvar *dat)
 
 	int ret;
 	char *old_cwd = _getenv("OLDPWD");
-	char *home;
+	char *home, *pwd;
 	char *new_cwd;
 
 	home = _getenv("HOME");
@@ -113,14 +112,16 @@ int cd_h(char *str, gvar *dat)
 	if (ret == -1)
 	{
 		print_err_msg(&str, 3, dat);
-
+		free(home);
+		free(old_cwd);
 		return (-1);
 	}
 	else if (ret == 0)
 	{
+		pwd = _getenv("PWD");
 		new_cwd = getcwd(NULL, 0);
-		setenv("OLDPWD", _getenv("PWD"), 1);
-		setenv("PWD", new_cwd, 1);
+		_setenv("OLDPWD", pwd, 1);
+		_setenv("PWD", new_cwd, 1);
 		/*(free(new_cwd);*/
 	}
 	if (str != NULL && str[0] == '-' && str[1] != '-')
@@ -128,6 +129,10 @@ int cd_h(char *str, gvar *dat)
 		write(1, new_cwd, slen(new_cwd));
 		write(1, "\n", 1);
 	}
+	free(home);
+	free(pwd);
+	free(new_cwd);
+	free(old_cwd);
 	return (ret);
 }
 
